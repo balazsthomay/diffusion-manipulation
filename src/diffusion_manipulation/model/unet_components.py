@@ -36,6 +36,9 @@ class Conv1dBlock(nn.Module):
         n_groups: int = 8,
     ) -> None:
         super().__init__()
+        # Reduce n_groups if out_channels isn't divisible (e.g. action_dim=7)
+        while n_groups > 1 and out_channels % n_groups != 0:
+            n_groups //= 2
         self.block = nn.Sequential(
             nn.Conv1d(in_channels, out_channels, kernel_size, padding=kernel_size // 2),
             nn.GroupNorm(n_groups, out_channels),

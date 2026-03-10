@@ -9,16 +9,16 @@ from tqdm import tqdm
 # robomimic dataset URLs (proficient-human, low_dim + images)
 DATASET_URLS: dict[str, dict[str, str]] = {
     "lift": {
-        "ph_low_dim": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/lift/ph/low_dim_v141.hdf5",
-        "ph_image": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/lift/ph/image_v141.hdf5",
+        "ph_low_dim": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/lift/ph/low_dim.hdf5",
+        "ph_image": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/lift/ph/image.hdf5",
     },
     "can": {
-        "ph_low_dim": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/can/ph/low_dim_v141.hdf5",
-        "ph_image": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/can/ph/image_v141.hdf5",
+        "ph_low_dim": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/can/ph/low_dim.hdf5",
+        "ph_image": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/can/ph/image.hdf5",
     },
     "square": {
-        "ph_low_dim": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/square/ph/low_dim_v141.hdf5",
-        "ph_image": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/square/ph/image_v141.hdf5",
+        "ph_low_dim": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/square/ph/low_dim.hdf5",
+        "ph_image": "http://downloads.cs.stanford.edu/downloads/rt_benchmark/square/ph/image.hdf5",
     },
 }
 
