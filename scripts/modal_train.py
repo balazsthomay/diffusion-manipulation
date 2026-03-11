@@ -57,7 +57,10 @@ def train(
     from diffusion_manipulation.training.trainer import Trainer
 
     data_dir = Path(VOL_PATH) / "datasets"
-    checkpoint_dir = Path(VOL_PATH) / "checkpoints" / task
+    if max_episodes is not None:
+        checkpoint_dir = Path(VOL_PATH) / "checkpoints" / f"{task}_{max_episodes}demos"
+    else:
+        checkpoint_dir = Path(VOL_PATH) / "checkpoints" / task
 
     # --- Download dataset to persistent volume if needed ---
     dataset_path = data_dir / task / "ph_image.hdf5"
@@ -154,11 +157,12 @@ def train(
     volumes={VOL_PATH: vol},
     timeout=60,
 )
-def list_checkpoints(task: str = "lift") -> list[str]:
+def list_checkpoints(task: str = "lift", max_episodes: int | None = None) -> list[str]:
     """List available checkpoints on the volume."""
     from pathlib import Path
 
-    checkpoint_dir = Path(VOL_PATH) / "checkpoints" / task
+    subdir = f"{task}_{max_episodes}demos" if max_episodes else task
+    checkpoint_dir = Path(VOL_PATH) / "checkpoints" / subdir
     if not checkpoint_dir.exists():
         return []
     return sorted(str(p.name) for p in checkpoint_dir.glob("*.pt"))
@@ -169,11 +173,16 @@ def list_checkpoints(task: str = "lift") -> list[str]:
     volumes={VOL_PATH: vol},
     timeout=300,
 )
-def download_checkpoint(task: str = "lift", filename: str = "checkpoint_final.pt") -> bytes:
+def download_checkpoint(
+    task: str = "lift",
+    filename: str = "checkpoint_final.pt",
+    max_episodes: int | None = None,
+) -> bytes:
     """Download a checkpoint from the volume."""
     from pathlib import Path
 
-    path = Path(VOL_PATH) / "checkpoints" / task / filename
+    subdir = f"{task}_{max_episodes}demos" if max_episodes else task
+    path = Path(VOL_PATH) / "checkpoints" / subdir / filename
     if not path.exists():
         raise FileNotFoundError(f"Checkpoint not found: {path}")
     return path.read_bytes()
@@ -187,17 +196,43 @@ def main(
     lr: float = 1e-4,
     seed: int = 42,
     max_episodes: int | None = None,
+    ablation: bool = False,
 ) -> None:
-    result = train.remote(
-        task=task,
-        epochs=epochs,
-        batch_size=batch_size,
-        lr=lr,
-        seed=seed,
-        max_episodes=max_episodes,
-    )
-    print(f"\nTraining complete!")
-    print(f"  Task: {result['task']}")
-    print(f"  Device: {result['device']}")
-    print(f"  Final loss: {result['final_loss']:.6f}")
-    print(f"  Min loss: {result['min_loss']:.6f}")
+    if ablation:
+        # Run n_demos ablation: train 25 and 100 demos in parallel
+        demo_counts = [25, 100]
+        print(f"Starting n_demos ablation: {demo_counts} demos, {epochs} epochs each")
+
+        handles = []
+        for n in demo_counts:
+            h = train.spawn(
+                task=task,
+                epochs=epochs,
+                batch_size=batch_size,
+                lr=lr,
+                seed=seed,
+                max_episodes=n,
+            )
+            handles.append((n, h))
+            print(f"  Spawned training: {n} demos")
+
+        for n, h in handles:
+            result = h.get()
+            print(f"\n[{n} demos] Training complete!")
+            print(f"  Device: {result['device']}")
+            print(f"  Final loss: {result['final_loss']:.6f}")
+            print(f"  Min loss: {result['min_loss']:.6f}")
+    else:
+        result = train.remote(
+            task=task,
+            epochs=epochs,
+            batch_size=batch_size,
+            lr=lr,
+            seed=seed,
+            max_episodes=max_episodes,
+        )
+        print(f"\nTraining complete!")
+        print(f"  Task: {result['task']}")
+        print(f"  Device: {result['device']}")
+        print(f"  Final loss: {result['final_loss']:.6f}")
+        print(f"  Min loss: {result['min_loss']:.6f}")

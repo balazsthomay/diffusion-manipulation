@@ -1,0 +1,70 @@
+{
+  "failure_analysis": {
+    "success_rate": 1.0,
+    "num_episodes": 20,
+    "num_successes": 20,
+    "total_failures": 0,
+    "failure_counts": {},
+    "reward_mean": 119.1,
+    "reward_std": 23.801050396988785,
+    "length_mean": 400.0,
+    "length_std": 0.0
+  },
+  "ablation": {
+    "variable": "ddim_inference_steps",
+    "configs": [
+      {
+        "name": "1 step",
+        "value": 1,
+        "success_rate": 0.0
+      },
+      {
+        "name": "2 steps",
+        "value": 2,
+        "success_rate": 1.0
+      },
+      {
+        "name": "4 steps",
+        "value": 4,
+        "success_rate": 1.0
+      },
+      {
+        "name": "8 steps",
+        "value": 8,
+        "success_rate": 1.0
+      },
+      {
+        "name": "16 steps",
+        "value": 16,
+        "success_rate": 1.0
+      },
+      {
+        "name": "32 steps",
+        "value": 32,
+        "success_rate": 1.0
+      }
+    ]
+  },
+  "ndemos_ablation": {
+    "variable": "n_demos",
+    "episodes_per_config": 50,
+    "seed": 42,
+    "configs": [
+      {
+        "name": "25 demos",
+        "value": 25,
+        "success_rate": 1.0
+      },
+      {
+        "name": "100 demos",
+        "value": 100,
+        "success_rate": 1.0
+      },
+      {
+        "name": "200 demos",
+        "value": 200,
+        "success_rate": 1.0
+      }
+    ]
+  }
+}
