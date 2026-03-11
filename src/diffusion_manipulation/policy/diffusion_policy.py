@@ -169,6 +169,10 @@ class DiffusionUnetPolicy(BasePolicy):
         # Move to device
         obs = {k: v.to(device) for k, v in obs.items()}
 
+        # Normalize lowdim obs (training dataset normalizes to [-1, 1])
+        if self.normalizer is not None and "lowdim_obs" in obs:
+            obs = {**obs, "lowdim_obs": self.normalizer.normalize("lowdim_obs", obs["lowdim_obs"])}
+
         # Encode observations
         global_cond = self._encode_obs(obs)
         B = global_cond.shape[0]

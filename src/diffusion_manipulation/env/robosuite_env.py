@@ -1,7 +1,5 @@
 """Robosuite environment wrapper for standardized observation and action interface."""
 
-from collections import deque
-
 import numpy as np
 import numpy.typing as npt
 
@@ -26,12 +24,13 @@ class RobosuiteEnv:
         seed: int | None = None,
     ) -> None:
         import robosuite as suite
-        from robosuite.controllers import load_composite_controller_config
+        from robosuite.controllers import load_controller_config
 
-        controller_config = load_composite_controller_config(
-            controller="BASIC",
-            robot="Panda",
-        )
+        controller_config = load_controller_config(default_controller="OSC_POSE")
+
+        # Seed global RNGs before env creation
+        if seed is not None:
+            np.random.seed(seed)
 
         self.camera_names = camera_names
         self.env = suite.make(
@@ -47,9 +46,6 @@ class RobosuiteEnv:
             control_freq=control_freq,
             horizon=horizon,
         )
-
-        if seed is not None:
-            self.env.seed(seed)
 
         self._obs: dict | None = None
 

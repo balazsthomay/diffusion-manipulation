@@ -86,6 +86,7 @@ def evaluate_policy(
         total_reward = 0.0
         step_count = 0
         done = False
+        episode_success = False
 
         while step_count < max_episode_steps and not done:
             # Build observation tensors from deque
@@ -110,14 +111,17 @@ def evaluate_policy(
                 total_reward += reward
                 step_count += 1
 
+                # Check success at every step (standard robomimic protocol)
+                if env.check_success():
+                    episode_success = True
+
                 if recording:
                     for cam_name in camera_names:
                         img_key = f"{cam_name}_image"
                         if img_key in obs:
                             video_recorder.add_frame(obs[img_key])
 
-        success = env.check_success()
-        if success:
+        if episode_success:
             successes += 1
 
         episode_rewards.append(total_reward)
@@ -193,11 +197,14 @@ def _build_obs_tensor(
     }
 
     # Stack images: (To, H, W, C) -> (1, To, C, H, W)
+    # Flip vertically: training data (mujoco-py/OpenCV convention) has opposite
+    # vertical orientation from live robosuite 1.4+ (DeepMind mujoco/OpenGL)
     for cam_name in camera_names:
         img_key = f"{cam_name}_image"
         if img_key in obs_list[0]:
             imgs = np.stack([o[img_key] for o in obs_list], axis=0)
-            imgs_tensor = torch.from_numpy(imgs).float() / 255.0
+            imgs = imgs[:, ::-1, :, :]  # Flip H dimension
+            imgs_tensor = torch.from_numpy(imgs.copy()).float() / 255.0
             imgs_tensor = imgs_tensor.permute(0, 3, 1, 2)  # (To, C, H, W)
             result[img_key] = imgs_tensor.unsqueeze(0).to(device)
 
