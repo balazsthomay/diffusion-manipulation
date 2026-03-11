@@ -99,11 +99,14 @@ def analyze_failures(
     failure_episodes: dict[FailureType, list[int]] = {ft: [] for ft in FailureType}
     total_failures = eval_result.num_episodes - eval_result.num_successes
 
-    for ep_idx, (reward, length) in enumerate(
-        zip(eval_result.episode_rewards, eval_result.episode_lengths)
+    for ep_idx, (reward, length, success) in enumerate(
+        zip(
+            eval_result.episode_rewards,
+            eval_result.episode_lengths,
+            eval_result.episode_successes,
+        )
     ):
-        # Skip successful episodes
-        if ep_idx < eval_result.num_successes:
+        if success:
             continue
 
         failure_type = categorize_failure(length, max_steps, reward)

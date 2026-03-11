@@ -39,6 +39,7 @@ class TestAnalyzeFailures:
             num_successes=10,
             episode_rewards=[1.0] * 10,
             episode_lengths=[50] * 10,
+            episode_successes=[True] * 10,
         )
         analysis = analyze_failures(result)
         assert analysis.total_failures == 0
@@ -48,12 +49,30 @@ class TestAnalyzeFailures:
             success_rate=0.5,
             num_episodes=4,
             num_successes=2,
-            episode_rewards=[1.0, 1.0, 0.05, 0.3],
-            episode_lengths=[50, 50, 100, 200],
+            episode_rewards=[1.0, 0.05, 1.0, 0.3],
+            episode_lengths=[50, 100, 50, 200],
+            episode_successes=[True, False, True, False],
         )
         analysis = analyze_failures(result)
         assert analysis.total_failures == 2
         assert analysis.total_episodes == 4
+        assert analysis.failure_counts[FailureType.GRASP_FAILURE] == 1
+        assert analysis.failure_counts[FailureType.TRANSPORT_FAILURE] == 1
+
+    def test_interleaved_successes_and_failures(self) -> None:
+        """Verify failures are correctly identified regardless of order."""
+        result = EvalResult(
+            success_rate=0.5,
+            num_episodes=4,
+            num_successes=2,
+            episode_rewards=[0.01, 1.0, 0.3, 1.0],
+            episode_lengths=[50, 50, 100, 50],
+            episode_successes=[False, True, False, True],
+        )
+        analysis = analyze_failures(result)
+        assert analysis.total_failures == 2
+        assert 0 in analysis.failure_episodes[FailureType.GRASP_FAILURE]
+        assert 2 in analysis.failure_episodes[FailureType.TRANSPORT_FAILURE]
 
     def test_failure_distribution(self) -> None:
         result = EvalResult(
@@ -62,6 +81,7 @@ class TestAnalyzeFailures:
             num_successes=0,
             episode_rewards=[0.01, 0.3, 0.6],
             episode_lengths=[50, 100, 200],
+            episode_successes=[False, False, False],
         )
         analysis = analyze_failures(result)
         dist = analysis.failure_distribution()

@@ -19,6 +19,7 @@ class EvalResult:
     num_successes: int
     episode_rewards: list[float] = field(default_factory=list)
     episode_lengths: list[int] = field(default_factory=list)
+    episode_successes: list[bool] = field(default_factory=list)
     seed: int = 0
 
 
@@ -69,6 +70,7 @@ def evaluate_policy(
     successes = 0
     episode_rewards: list[float] = []
     episode_lengths: list[int] = []
+    episode_successes: list[bool] = []
 
     for ep_idx in range(num_episodes):
         recording = video_recorder is not None and ep_idx < record_episodes
@@ -126,6 +128,7 @@ def evaluate_policy(
 
         episode_rewards.append(total_reward)
         episode_lengths.append(step_count)
+        episode_successes.append(episode_success)
 
         if recording:
             video_recorder.stop()
@@ -136,6 +139,7 @@ def evaluate_policy(
         num_successes=successes,
         episode_rewards=episode_rewards,
         episode_lengths=episode_lengths,
+        episode_successes=episode_successes,
     )
 
 

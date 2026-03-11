@@ -81,6 +81,8 @@ class TestEvaluatePolicy:
         assert result.num_episodes == 5
         assert len(result.episode_rewards) == 5
         assert len(result.episode_lengths) == 5
+        assert len(result.episode_successes) == 5
+        assert all(isinstance(s, bool) for s in result.episode_successes)
 
     def test_success_rate_calculation(self) -> None:
         policy = MockPolicy()

@@ -100,6 +100,10 @@ class DiffusionUnetPolicy(BasePolicy):
     def set_normalizer(self, normalizer: LinearNormalizer) -> None:
         self.normalizer = normalizer
 
+    def set_inference_steps(self, num_steps: int) -> None:
+        """Change number of DDIM inference steps (for ablation studies)."""
+        self.noise_scheduler_infer.set_timesteps(num_steps)
+
     def _encode_obs(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
         """Encode observations into a global conditioning vector."""
         images = {}
