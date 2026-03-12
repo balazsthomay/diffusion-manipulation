@@ -32,7 +32,7 @@ image = (
 
 @app.function(
     image=image,
-    gpu="T4",
+    gpu="A10G",
     volumes={VOL_PATH: vol},
     timeout=4 * 3600,  # 4 hours max
 )

@@ -13,18 +13,34 @@ Built as a self-contained pipeline — data loading, model architecture, trainin
 
 ## Results
 
-### Lift Task — 98.7% Success Rate
+### Multi-Task Evaluation
 
-Evaluated over 150 episodes (50 episodes x 3 random seeds):
+| Task | Difficulty | Success Rate | Episodes |
+|------|-----------|-------------|----------|
+| **Lift** | Easy (pick up cube) | **98.7% +/- 0.9%** | 148/150 |
+| **Can** | Medium (pick and place can) | **26.0% +/- 2.8%** | 39/150 |
+
+Both trained with 200 demonstrations, 250 epochs, 98.4M parameters. Evaluated over 150 episodes (50 x 3 seeds).
+
+### Lift Task — 98.7% Success Rate
 
 | Seed | Success Rate | Episodes |
 |------|-------------|----------|
 | 42   | 98%         | 49/50    |
 | 123  | 98%         | 49/50    |
 | 456  | 100%        | 50/50    |
-| **Mean** | **98.7% +/- 0.9%** | **148/150** |
 
-Training: 200 demonstrations, 250 epochs on a T4 GPU. Loss converged from 0.060 (epoch 10) to 0.013 (epoch 250). 98.4M parameters.
+Training: 200 demonstrations, 250 epochs on a T4 GPU. Loss: 0.060 (epoch 10) → 0.013 (epoch 250).
+
+### Can Task — 26.0% Success Rate
+
+| Seed | Success Rate | Episodes |
+|------|-------------|----------|
+| 42   | 30%         | 15/50    |
+| 123  | 24%         | 12/50    |
+| 456  | 24%         | 12/50    |
+
+Training: 200 demonstrations, 250 epochs on an A10G GPU. Loss: 0.054 (epoch 10) → 0.013 (epoch 250). Pick-and-place is significantly harder than Lift — the policy must grasp the can, transport it, and place it in the target bin. Same final loss as Lift, indicating the model trains well but the task demands more precise multi-phase coordination.
 
 ### Ablation: DDIM Inference Steps
 
@@ -109,7 +125,7 @@ src/diffusion_manipulation/
         base_policy.py           # Abstract policy interface
         diffusion_policy.py      # DiffusionUnetPolicy (DDPM loss + DDIM inference)
     env/
-        robosuite_env.py         # Robosuite wrapper (Lift task, Panda arm)
+        robosuite_env.py         # Robosuite wrapper (Lift/Can/Square, Panda arm)
         video_recorder.py        # Episode recording -> GIF
     training/
         trainer.py               # Training loop (AdamW, cosine LR, EMA, checkpoints)
@@ -120,7 +136,7 @@ src/diffusion_manipulation/
 scripts/
     download_data.py             # Download datasets
     train.py                     # Train locally
-    modal_train.py               # Train on Modal (T4 GPU)
+    modal_train.py               # Train on Modal (A10G GPU)
     evaluate.py                  # Evaluate trained policy
     run_analysis.py              # Failure analysis + DDIM ablation
     run_ndemos_ablation.py       # N-demos ablation evaluation
@@ -143,23 +159,24 @@ uv sync
 ### 1. Download data
 
 ```bash
-uv run python scripts/download_data.py --task lift
+uv run python scripts/download_data.py --task lift  # ~837MB
+uv run python scripts/download_data.py --task can   # ~2GB
 ```
-
-Downloads the robomimic Lift dataset (proficient-human, 200 demonstrations, ~837MB) to `data/lift/ph_image.hdf5`.
 
 ### 2. Train
 
 **On Modal (recommended):**
 
 ```bash
-modal run scripts/modal_train.py --epochs 250
+modal run scripts/modal_train.py --task lift --epochs 250
+modal run scripts/modal_train.py --task can --epochs 250
 ```
 
-Trains on a T4 GPU with the dataset stored on a persistent Modal volume. Checkpoints are saved to the volume and can be downloaded:
+Trains on an A10G GPU with the dataset stored on a persistent Modal volume. Checkpoints are saved to the volume and can be downloaded:
 
 ```bash
 modal volume get diffusion-data checkpoints/lift/checkpoint_epoch_250.pt checkpoints/lift/checkpoint_epoch_250.pt
+modal volume get diffusion-data checkpoints/can/checkpoint_epoch_250.pt checkpoints/can/checkpoint_epoch_250.pt
 ```
 
 **Locally (CPU/GPU):**
